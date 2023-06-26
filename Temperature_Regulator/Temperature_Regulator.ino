@@ -16,11 +16,13 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define MOTOR_ENABLE_PIN 6
 
 #define TIME_INTERVAL 500 // 500 ms interval between updates
+#define DELAY_INTERVAL 5000 // 5 seconds interval for delay, change to increase time before motor turn off
 
 unsigned long prevMil = 0;
 
 int celsius = 0;
 int desiredTemp = 21; // Desired temperature, edit to change desired temp
+unsigned long stateDelay = 0; // Delay to avoid rapid turning on and off of motor when temp is close to desired
 int motorState = false;
 
 // Function declarations needed for the rest of the code to see them before they are described
@@ -57,8 +59,11 @@ void loop() {
 
   if(celsius > desiredTemp){ // If temperature of higher than desired, tell program to turn on motor
     motorState = true;
+    stateDelay = millis();
   } else {
-    motorState = false;
+    if (millis() - stateDelay > DELAY_INTERVAL) { // If temperature has been lower than desired for longer than 5 seconds.
+      motorState = false;
+    }
   }
 
   updateMotorSpeed(); // Update the motorspeed (turn it on or off in this case)
