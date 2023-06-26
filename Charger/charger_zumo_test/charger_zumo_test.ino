@@ -275,7 +275,7 @@ void handleCommand(uint16_t senderID, uint16_t command) {
         state = RED; // Stop robot
         charging = true; // Initiate battery charging
       }
-    } else if (command == COMMAND_MANUAL_CHARGE){
+    } else if (command == COMMAND_MANUAL_CHARGE){ // Initiate charge regardless of battery level
       Serial.println("Manual Charge");
       state = RED;
       charging = true;

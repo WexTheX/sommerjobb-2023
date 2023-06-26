@@ -42,7 +42,7 @@ void updateButton(){
   if(digitalRead(BUTTON_PIN_1) == HIGH){
     manualCharge = true;
   }
-  Serial.println(manualCharge);
+  //Serial.println(manualCharge);
 }
 
 void setup() {
@@ -61,11 +61,11 @@ void loop() {
   updateButton();
 
   if(timeNow - millis() > SEND_INTERVAL){ // Sends IR-signal for robot to know it's at the charge station every SEND_INTERVAL ms
-    if(manualCharge){
+    if(manualCharge){ // If button is pressed, send manual order command
       IrSender.sendNEC(DEVICE_ID, COMMAND_MANUAL_CHARGE, 0);
       lastTransmission = timeNow;
       awaitingAnswer = true;
-    } else {
+    } else { // If button is not pressed, send auto order command
       IrSender.sendNEC(DEVICE_ID, COMMAND_CHARGE_STATION, 0);
       lastTransmission = timeNow;
       awaitingAnswer = true;
