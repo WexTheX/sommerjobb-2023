@@ -1,6 +1,6 @@
 # Eksempel på IR-basert ladestasjon-kode for Zumo prosjekt.
-charger_<name> mappene inneholder grunnleggende funksjonalitet med SW_batteri og oppladningfunksjoner.
-charger_<name>_test mappene inneholder ekstra funksjonalitet
+charger_X mappene inneholder grunnleggende funksjonalitet med SW_batteri og oppladningfunksjoner.
+charger_X_test mappene inneholder ekstra funksjonalitet
 
 Koden benytter sensor: IRM-56384 IR mottaker (dokumentasjon: https://datasheet.lcsc.com/lcsc/2201242300_Everlight-Elec-IRM-56384_C72048.pdf)
 
