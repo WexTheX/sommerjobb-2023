@@ -26,13 +26,11 @@ Zumo32U4IRPulses::Direction IR_DIRECTION = Zumo32U4IRPulses::Left; // Direction 
 #define COMMAND_TOL_STATION 0xF1    // Command for telling the robot it's at a tol station
 #define COMMAND_CHARGE_STATION 0xF2 // Command telling the robot it is at a charger station
 
-
 #define COMMAND_OPEN 0x01   // Command for telling the tol station to open the gate
 #define COMMAND_IDENTIFYING 0x02 // Command for identifying itself
 
 #define COMMAND_CHARGE 0xC1 // Command for telling the charge station to charge the robot
 #define COMMAND_CHARGE_COMPETE 0xC2 // Command for telling the charge station the charge is completed
-#define COMMAND_MANUAL_CHARGE 0xC3 // Command for manually telling the robot to charge at the next pass
 
 unsigned long recivedCommandTime = 0;
 int CommandToAnswer;
@@ -187,13 +185,6 @@ void readIR() {
     digitalWrite(YELLOW_LED, HIGH);
     senderID = IrReceiver.decodedIRData.address;
     newCommand = true;
-  } else if (IrReceiver.decodedIRData.command == COMMAND_MANUAL_CHARGE){
-    // If we recive a command for a manual charge, we set the parameters for answering
-    recivedCommandTime = millis();
-    CommandToAnswer = COMMAND_MANUAL_CHARGE;
-    digitalWrite(YELLOW_LED, HIGH);
-    senderID = IrReceiver.decodedIRData.address;
-    newCommand = true;
   }
 }
 
@@ -275,10 +266,6 @@ void handleCommand(uint16_t senderID, uint16_t command) {
         state = RED; // Stop robot
         charging = true; // Initiate battery charging
       }
-    } else if (command == COMMAND_MANUAL_CHARGE){ // Initiate charge regardless of battery level
-      Serial.println("Manual Charge");
-      state = RED;
-      charging = true;
     }
   }
 }
