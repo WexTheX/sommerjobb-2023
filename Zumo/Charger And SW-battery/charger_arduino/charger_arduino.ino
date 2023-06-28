@@ -7,13 +7,14 @@
 
 #define DEVICE_ID 202 // ID of charger device 
 
-#define COMMAND_CHARGE_STATION 0xF2 // Command telling the robot it is at a charger station
+#define COMMAND_CHARGE_STATION 0xF2   // Command telling the robot it is at a charger station
 
-#define COMMAND_CHARGE 0xC1 // Command telling charge station to charge the robot
-#define COMMAND_CHARGE_COMPETE 0xC2 // Command for telling the charge station the charge is completed
-#define COMMAND_MANUAL_CHARGE 0xC3 // Command for manually telling the robot to charge
+#define COMMAND_CHARGE 0xC1           // Command telling charge station to charge the robot
+#define COMMAND_CHARGE_COMPETE 0xC2   // Command for telling the charge station the charge is completed
+#define COMMAND_MANUAL_CHARGE 0xC3    // Command for manually telling the robot to charge
+#define COMMAND_CHARGE_CONFIRM 0xC4   // Command for telling the robot that the completion command was received
 
-#define SEND_INTERVAL 100
+#define SEND_INTERVAL 100 // Interval of messages sent from charger.
 
 #define BUTTON_PIN_1 4
 
@@ -91,8 +92,8 @@ void loop() {
 
       if (IrReceiver.decodedIRData.command == COMMAND_CHARGE) { // If the command is a request to charge
         lastCarID = IrReceiver.decodedIRData.address;
-        // Serial.print(".");
         amountCharged += 1;
+        // Serial.println(amountCharged);
       }
 
       if (IrReceiver.decodedIRData.command == COMMAND_CHARGE_COMPETE){ // If the command say that the charge is completed
@@ -104,6 +105,8 @@ void loop() {
         
         amountCharged = 0; // Clear variables for next charge
         manualCharge = false;
+
+        IrSender.sendNEC(DEVICE_ID, COMMAND_CHARGE_CONFIRM, 0);        
       }
 
       awaitingAnswer = false;

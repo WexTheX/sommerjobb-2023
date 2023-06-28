@@ -32,6 +32,7 @@ Zumo32U4IRPulses::Direction IR_DIRECTION = Zumo32U4IRPulses::Left; // Direction 
 #define COMMAND_CHARGE 0xC1           // Command for telling the charge station to charge the robot
 #define COMMAND_CHARGE_COMPETE 0xC2   // Command for telling the charge station the charge is completed
 #define COMMAND_MANUAL_CHARGE 0xC3    // Command for manually telling the robot to charge at the next pass
+#define COMMAND_CHARGE_CONFIRM 0xC4   // Command for telling the robot the charge station received the confirm order
 
 unsigned long recivedCommandTime = 0;
 int CommandToAnswer;
@@ -198,6 +199,9 @@ void readIR() {
     digitalWrite(YELLOW_LED, HIGH);
     senderID = IrReceiver.decodedIRData.address;
     newCommand = true;
+  } else if (IrReceiver.decodedIRData.command == COMMAND_CHARGE_CONFIRM){
+      lightState = GREEN;
+      charging = false;
   }
 }
 
@@ -422,8 +426,6 @@ void updateBattery(){ // Core function for battery behaviour
       } else {
         batState = OK;
         sendCommand(DEVICE_ID, COMMAND_CHARGE_COMPETE, IR_DIRECTION); // Tells charge station that the robot is fully charged
-        lightState = GREEN;
-        charging = false;
         IrReceiver.start(); // Enable receiving of the next value
       }
       break;
