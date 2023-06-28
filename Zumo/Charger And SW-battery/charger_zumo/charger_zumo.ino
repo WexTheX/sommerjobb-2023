@@ -333,7 +333,7 @@ void setup() {
   loadCustomCharacters();
 
   // Play a little welcome song
-  //buzzer.play(">g32>>c32");
+  buzzer.play(">g32>>c32");
 
   // Wait for button A to be pressed and released.
   display.clear();
@@ -342,15 +342,15 @@ void setup() {
   display.print(F("to calib"));
   buttonA.waitForButton();
 
-  //calibrateSensors();
+  calibrateSensors();
 
   showReadings();
 
   // Play music and wait for it to finish before we start driving.
   display.clear();
   display.print(F("Go!"));
-  //buzzer.play("L16 cdegreg4");
-  //while (buzzer.isPlaying());
+  buzzer.play("L16 cdegreg4");
+  while (buzzer.isPlaying());
 }
 
 void loop() {
@@ -405,7 +405,7 @@ void loop() {
   leftSpeed = constrain(leftSpeed, 0, (int16_t)maxSpeed);
   rightSpeed = constrain(rightSpeed, 0, (int16_t)maxSpeed);
 
-  //motors.setSpeeds(leftSpeed, rightSpeed);
+  motors.setSpeeds(leftSpeed, rightSpeed);
 }
 
 // SW-Battery
@@ -455,7 +455,7 @@ void drainBattery(){
     // Serial.println(revRight);
     
     double revTotal = revLeft + revRight; // Calculate rotations of both motors
-    Serial.println(revTotal); 
+    // Serial.println(revTotal); 
     batteryLevel -= revTotal; // Calculates drain based on total rotations
 
     // V (velocity) = (pi/2)*(D*RPS)
@@ -465,7 +465,7 @@ void drainBattery(){
     // Serial.println(speedLeft);
     // Serial.println(speedRight);
     speedTotal = (speedLeft+speedRight)/2; // Calculate total speed of robot
-    Serial.println(speedTotal);
+    // Serial.println(speedTotal);
 
     lastDrain = millis();
 
@@ -486,7 +486,7 @@ void drainBattery(){
     display.print(String(batteryLevelPercent)); display.print("% ");
     display.print(String(speedTotal)); display.print("m/s");
         
-    Serial.println(batteryLevel);
+    // Serial.println(batteryLevel);
     // Serial.println(batState);
   }
 }
