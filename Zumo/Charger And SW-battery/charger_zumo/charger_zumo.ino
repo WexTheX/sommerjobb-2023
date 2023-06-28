@@ -229,8 +229,10 @@ void updateBattery(){ // Core function for battery behaviour
         sendCommand(DEVICE_ID, COMMAND_CHARGE, IR_DIRECTION); // Send order command to charge station
         delay(100);
         batteryLevel++;
-        //display.clear();
-        //display.print(String(batteryLevel)); display.println("%");
+        int batteryLevelPercent = map(batteryLevel, 0, 255, 0, 100);
+        display.clear();
+        display.print(String(batteryLevelPercent)); display.print("% ");
+        display.print(String(speedTotal)); display.print("m/s");
       } else {
         batState = OK;
         sendCommand(DEVICE_ID, COMMAND_CHARGE_COMPETE, IR_DIRECTION); // Tells charge station that the robot is fully charged
@@ -259,11 +261,23 @@ void drainBattery(){
         and the motors have a 75:1 ratio (more precisely 75.81:1)
         in other words the encoders have a 909.7 counts per revolution for the motors (75.81 * 12) */
     
-    double revLeft = (countLeft/909.7)*60; // As this function runs every second can you multiply this with
-    double revRight = countRight/909.7*60; // 60 in order to get the standard unit RPM (rotations per minute);
+    double revLeft = (countLeft/909.7); // As this function runs every second
+    double revRight = (countRight/909.7); // This value should be RPS (rotations per second)
     // Serial.println(revLeft);
     // Serial.println(revRight);
+    
+    double revTotal = revLeft + revRight; // Calculate rotations of both motors
+    Serial.println(revTotal); 
+    batteryLevel -= revTotal; // Calculates drain based on total rotations
 
+    // V (velocity) = (pi/2)*(D*RPS)
+    // D (diameter) = 0.039m
+    double speedLeft = (3.14/2)*0.039*revLeft; // Calculate speed left wheels
+    double speedRight = (3.14/2)*0.039*revRight; // Calculate speed of right wheels
+    // Serial.println(speedLeft);
+    // Serial.println(speedRight);
+    double speedTotal = (speedLeft+speedRight)/2; // Calculate total speed of robot
+    Serial.println(speedTotal);
 
     lastDrain = millis();
 
@@ -278,13 +292,14 @@ void drainBattery(){
       lightState = YELLOW;
       yellowStartTime = millis();
     }
-
+    
+    int batteryLevelPercent = map(batteryLevel, 0, 255, 0, 100); // Convert batteryvalue to percent
     display.clear();
-    display.print(String(batteryLevel));
+    display.print(String(batteryLevelPercent)); display.print("% ");
+    display.print(String(speedTotal)); display.print("m/s");
         
-    // Serial.println(batteryLevel);
+    Serial.println(batteryLevel);
     // Serial.println(batState);
-
   }
 }
 
