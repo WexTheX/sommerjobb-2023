@@ -10,27 +10,28 @@
 #include <Zumo32U4IRPulses.h>
 
 #define SUBCARIER_PERIOD 420  // The default frequency is 16000000 / (420 + 1) = 38.005 kHz
-#define IR_BRIGHNESS 100        // 0-400, 0 is off, 400 is max brightness
+#define IR_BRIGHNESS 100      // 0-400, 0 is off, 400 is max brightness
 Zumo32U4IRPulses::Direction IR_DIRECTION = Zumo32U4IRPulses::Left; // Direction of the IR LED
 
 #define IR_RECEIVE_PIN 22   // pin for IR receiver, 22 is the front proximity sensor
 
 #define DEVICE_ID 2  // ID of the device, used to identify the robot
 
-// Commands for traffic light states
-#define RED_LIGHT_COMMAND 52        
+// IR-Sensor commands the robot either sends or recieves.
+#define RED_LIGHT_COMMAND 52          // Commands for traffic light states
 #define YELLOW_LIGHT_COMMAND 53
 #define GREEN_LIGHT_COMMAND 54
 
-#define COMMAND_IDENTIFY 0xF0       // Command for telling the robot to identify itself
-#define COMMAND_TOL_STATION 0xF1    // Command for telling the robot it's at a tol station
-#define COMMAND_CHARGE_STATION 0xF2 // Command telling the robot it is at a charger station
+#define COMMAND_IDENTIFY 0xF0         // Command for telling the robot to identify itself
+#define COMMAND_TOL_STATION 0xF1      // Command for telling the robot it's at a tol station
+#define COMMAND_CHARGE_STATION 0xF2   // Command telling the robot it is at a charger station
 
-#define COMMAND_OPEN 0x01   // Command for telling the tol station to open the gate
-#define COMMAND_IDENTIFYING 0x02 // Command for identifying itself
+#define COMMAND_OPEN 0x01             // Command for telling the tol station to open the gate
+#define COMMAND_IDENTIFYING 0x02      // Command for identifying itself
 
-#define COMMAND_CHARGE 0xC1 // Command for telling the charge station to charge the robot
-#define COMMAND_CHARGE_COMPETE 0xC2 // Command for telling the charge station the charge is completed
+#define COMMAND_CHARGE 0xC1           // Command for telling the charge station to charge the robot
+#define COMMAND_CHARGE_COMPETE 0xC2   // Command for telling the charge station the charge is completed
+#define COMMAND_MANUAL_CHARGE 0xC3    // Command for manually telling the robot to charge at the next pass
 
 unsigned long recivedCommandTime = 0;
 int CommandToAnswer;
@@ -41,22 +42,23 @@ bool newCommand = false;
 
 const int authorisedDevices[] = { 200, 201, 202 }; // List of authorised devices
 
-#define YELLOW_LED 13
+#define YELLOW_LED 13 // On-robot LED light
 
-// This is the maximum speed the motors will be allowed to turn.
-// A maxSpeed of 400 lets the motors go at top speed.  Decrease
-// this value to impose a speed limit.
+/*  This is the maximum speed the motors will be allowed to turn.
+    A maxSpeed of 400 lets the motors go at top speed.  
+    Decrease this value to impose a speed limit. */
 uint16_t maxSpeed = 400;
 
 Zumo32U4Buzzer buzzer;
 Zumo32U4LineSensors lineSensors;
 Zumo32U4Motors motors;
 Zumo32U4ButtonA buttonA;
-
 Zumo32U4OLED display;
+Zumo32U4Encoders encoders;
 
-enum ledState { RED, YELLOW, GREEN }; // Traffic light states
-ledState state = GREEN; 
+// Traffic light variables
+enum trafficLightState { RED, YELLOW, GREEN }; // Traffic light states
+trafficLightState lightState = GREEN; 
 
 #define YELLOW_SLOW_TIME 2000  // Time to drive slowly after yellow light
 unsigned long yellowStartTime = 0;
@@ -78,6 +80,9 @@ int batteryMax = 255;
 int chargeLimit = 150;
 int criticalLimit = 50;
 
+// Function declarations
+void updateBattery();
+void drainBattery();
 
 // Sets up special characters for the display so that we can show
 // bar graphs.
@@ -159,12 +164,12 @@ void readIR() {
   if (IrReceiver.decodedIRData.command == 0) {
     return; // We have a bad reading, so we exit the function
   } else if (IrReceiver.decodedIRData.command == RED_LIGHT_COMMAND) {
-    state = RED;
+    lightState = RED;
   } else if (IrReceiver.decodedIRData.command == YELLOW_LIGHT_COMMAND) {
-    state = YELLOW;
+    lightState = YELLOW;
     yellowStartTime = millis();
   } else if (IrReceiver.decodedIRData.command == GREEN_LIGHT_COMMAND) {
-    state = GREEN;
+    lightState = GREEN;
   } else if (IrReceiver.decodedIRData.command == COMMAND_IDENTIFY) {
     // If we recive a command to identify, we set the parameters for answering
     recivedCommandTime = millis();
@@ -185,19 +190,26 @@ void readIR() {
     digitalWrite(YELLOW_LED, HIGH);
     senderID = IrReceiver.decodedIRData.address;
     newCommand = true;
+  } else if (IrReceiver.decodedIRData.command == COMMAND_MANUAL_CHARGE){
+    // If we recive a command for a manual charge, we set the parameters for answering
+    recivedCommandTime = millis();
+    CommandToAnswer = COMMAND_MANUAL_CHARGE;
+    digitalWrite(YELLOW_LED, HIGH);
+    senderID = IrReceiver.decodedIRData.address;
+    newCommand = true;
   }
 }
 
 // Function to update the speed of the robot based on the traffic light state
 void updateSpeed() {
-  switch (state) {
+  switch (lightState) {
     case RED:
       maxSpeed = 0;
       break;
     case YELLOW:
       maxSpeed = 100;
       if (millis() - yellowStartTime >= YELLOW_SLOW_TIME) {
-        state = GREEN;
+        lightState = GREEN;
       }
       break;
     case GREEN:
@@ -210,40 +222,19 @@ void updateSpeed() {
 void updateBattery(){ // Core function for battery behaviour
   switch(charging){
     case false: // When battery is draining
-      if((millis() - lastDrain > 1000) && batteryLevel > 0){
-        batteryLevel -= (maxSpeed/40); // Math to simulate battery-drain
-        lastDrain = millis();
-
-        if(batteryLevel < chargeLimit){ // Only ask for charge automatically when charge is lower than chargeLimit
-        Serial.println("Needs charge");
-        batState = BAD;
-        }
-
-        if(batteryLevel < criticalLimit){ // Make robot drive slower when battery is critically low
-          Serial.println("Battery critical");
-          batState = CRITICAL;
-          state = YELLOW;
-          yellowStartTime = millis();
-        }
-
-        display.clear();
-        display.print(String(batteryLevel));
-        
-        // Serial.println(batteryLevel);
-        // Serial.println(batState);
-
-      } break;
+      drainBattery(); 
+      break;
     case true: // When battery is charging
       if(batteryLevel < batteryMax){ // As long as battery is lower than max value
         sendCommand(DEVICE_ID, COMMAND_CHARGE, IR_DIRECTION); // Send order command to charge station
         delay(100);
         batteryLevel++;
-        display.clear();
-        display.print(String(batteryLevel));
+        //display.clear();
+        //display.print(String(batteryLevel)); display.println("%");
       } else {
         batState = OK;
         sendCommand(DEVICE_ID, COMMAND_CHARGE_COMPETE, IR_DIRECTION); // Tells charge station that the robot is fully charged
-        state = GREEN;
+        lightState = GREEN;
         charging = false;
         IrReceiver.start(); // Enable receiving of the next value
       }
@@ -251,7 +242,53 @@ void updateBattery(){ // Core function for battery behaviour
   }
 }
 
-// functon for handling received commands
+void drainBattery(){
+  // Basic battery drain function based on made up values and robot speed
+  if((millis() - lastDrain > 1000) && batteryLevel > 0){
+    // Basic battery drain based only on maxSpeed set by lightState.
+    //batteryLevel -= (maxSpeed/40); 
+
+    // Battery drain based robots encoders measuring counts
+    int16_t countLeft = encoders.getCountsAndResetLeft();
+    int16_t countRight = encoders.getCountsAndResetRight();
+        
+    // Serial.println(rotLeft);
+    // Serial.println(rotRight);
+
+    /*  According to the documentation does the encoders provide 12 counts per revolution of the motor shaft
+        and the motors have a 75:1 ratio (more precisely 75.81:1)
+        in other words the encoders have a 909.7 counts per revolution for the motors (75.81 * 12) */
+    
+    double revLeft = (countLeft/909.7)*60; // As this function runs every second can you multiply this with
+    double revRight = countRight/909.7*60; // 60 in order to get the standard unit RPM (rotations per minute);
+    // Serial.println(revLeft);
+    // Serial.println(revRight);
+
+
+    lastDrain = millis();
+
+    if(batteryLevel < chargeLimit){ // Only ask for charge automatically when charge is lower than chargeLimit
+      Serial.println("Needs charge");
+      batState = BAD;
+    }
+
+    if(batteryLevel < criticalLimit){ // Make robot drive slower when battery is critically low
+      Serial.println("Battery critical");
+      batState = CRITICAL;
+      lightState = YELLOW;
+      yellowStartTime = millis();
+    }
+
+    display.clear();
+    display.print(String(batteryLevel));
+        
+    // Serial.println(batteryLevel);
+    // Serial.println(batState);
+
+  }
+}
+
+// Function for handling received commands
 void handleCommand(uint16_t senderID, uint16_t command) {
   if (isAuthorised(senderID)) {
     if (command == COMMAND_IDENTIFY) {
@@ -263,9 +300,13 @@ void handleCommand(uint16_t senderID, uint16_t command) {
     } else if (command == COMMAND_CHARGE_STATION){
       Serial.println("Charge station");
       if(batState != OK){ // If battery is low enough
-        state = RED; // Stop robot
+        lightState = RED; // Stop robot
         charging = true; // Initiate battery charging
       }
+    } else if (command == COMMAND_MANUAL_CHARGE){ // Initiate charge regardless of battery level
+      Serial.println("Manual Charge");
+      lightState = RED;
+      charging = true;
     }
   }
 }
@@ -357,7 +398,7 @@ void setup() {
   loadCustomCharacters();
 
   // Play a little welcome song
-  buzzer.play(">g32>>c32");
+  //buzzer.play(">g32>>c32");
 
   // Wait for button A to be pressed and released.
   display.clear();
@@ -366,39 +407,41 @@ void setup() {
   display.print(F("to calib"));
   buttonA.waitForButton();
 
-  calibrateSensors();
+  //calibrateSensors();
 
   showReadings();
 
   // Play music and wait for it to finish before we start driving.
   display.clear();
   display.print(F("Go!"));
-  buzzer.play("L16 cdegreg4");
-  while (buzzer.isPlaying());
+  //buzzer.play("L16 cdegreg4");
+  //while (buzzer.isPlaying());
 }
 
 void loop() {
   readIR();
   updateSpeed();
   updateBattery();
+
   if (millis() - recivedCommandTime > ANSWER_DELAY && newCommand == true) {
     handleCommand(senderID, CommandToAnswer);
     newCommand = false;
     IrReceiver.start();  // Enable receiving of the next value
   }
+  
   // Get the position of the line.  Note that we *must* provide
   // the "lineSensorValues" argument to readLine() here, even
   // though we are not interested in the individual sensor
   // readings.
   int16_t position = lineSensors.readLine(lineSensorValues);
-  Serial.print("Pos:");
-  Serial.print(position);
+  //Serial.print("Pos:");
+  //Serial.print(position);
 
   // Our "error" is how far we are away from the center of the
   // line, which corresponds to position 2000.
   int16_t error = position - 2000;
-  Serial.print("\t err:");
-  Serial.print(error);
+  //Serial.print("\t err:");
+  //Serial.print(error);
 
   // Get motor speed difference using proportional and derivative
   // PID terms (the integral term is generally not very useful
@@ -408,8 +451,8 @@ void loop() {
   // want to use trial and error to tune these constants for your
   // particular Zumo and line course.
   int16_t speedDifference = error / 4 + 6 * (error - lastError);
-  Serial.print("\t dif:");
-  Serial.println(speedDifference);
+  //Serial.print("\t dif:");
+  //Serial.println(speedDifference);
 
   lastError = error;
 
@@ -427,5 +470,5 @@ void loop() {
   leftSpeed = constrain(leftSpeed, 0, (int16_t)maxSpeed);
   rightSpeed = constrain(rightSpeed, 0, (int16_t)maxSpeed);
 
-  motors.setSpeeds(leftSpeed, rightSpeed);
+  //motors.setSpeeds(leftSpeed, rightSpeed);
 }
