@@ -7,6 +7,7 @@
 
 #define DEVICE_ID 202 // ID of charger device 
 
+// IR-Commands
 #define COMMAND_CHARGE_STATION 0xF2   // Command telling the robot it is at a charger station
 
 #define COMMAND_CHARGE 0xC1           // Command telling charge station to charge the robot
@@ -24,7 +25,7 @@ unsigned long lastTransmission = 0;
 bool manualCharge = false;
 
 int amountCharged = 0;
-int IDList[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 53}; // List of ID of all robots in the system used as reference for accounts
+int IDList[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 53 }; // List of ID of all robots in the system used as reference for accounts
 unsigned long chargeList[10] = { 0 }; // List of total charge for each robot (aka the account of each robot)
 int lastCarID;
 

@@ -49,8 +49,10 @@ const int authorisedDevices[] = { 200, 201, 202 }; // List of authorised devices
     A maxSpeed of 400 lets the motors go at top speed.  
     Decrease this value to impose a speed limit. */
 uint16_t maxSpeed = 400;
+
 double speedTotal = 0;
 
+// Access the Zumo objects defined in the zumo arduino library
 Zumo32U4Buzzer buzzer;
 Zumo32U4LineSensors lineSensors;
 Zumo32U4Motors motors;
@@ -77,10 +79,12 @@ batteryState batState = OK;
 unsigned long lastDrain = 0;
 bool charging = false;
 
-int batteryLevel = 255; // Values for battery, edit to change startvalue, maxvalue and thresholds.
-int batteryMax = 255;
-int chargeLimit = 150;
-int criticalLimit = 50;
+int batteryMax = 255;                   // Max value of battery                         (Default: 255)
+int batteryLevel = batteryMax;          // Start value of battery when robot turns on   (Default: 100& of max)
+int chargeLimit = batteryMax * 0.40;    // Value for when autochange should initiate    (Default: 40% of max)
+int criticalLimit = batteryMax * 0.10;  // Value for when critical mode should initiate (Default: 10% of max)
+
+int charge_cycles = 0;
 
 // Function declarations
 void updateBattery();
@@ -415,7 +419,7 @@ void updateBattery(){ // Core function for battery behaviour
       drainBattery(); 
       break;
     case true: // When battery is charging
-      if(batteryLevel < batteryMax){ // As long as battery is lower than max value
+      if(batteryLevel < batteryMax*0.80){ // As long as battery is lower than 20 of max value
         sendCommand(DEVICE_ID, COMMAND_CHARGE, IR_DIRECTION); // Send order command to charge station
         delay(100);
         batteryLevel++;
@@ -425,6 +429,7 @@ void updateBattery(){ // Core function for battery behaviour
         display.print(String(speedTotal)); display.print("m/s");
       } else {
         batState = OK;
+        charge_cycles += 1; // Increase charge cycles after charge
         sendCommand(DEVICE_ID, COMMAND_CHARGE_COMPETE, IR_DIRECTION); // Tells charge station that the robot is fully charged
         IrReceiver.start(); // Enable receiving of the next value
       }
@@ -432,31 +437,30 @@ void updateBattery(){ // Core function for battery behaviour
   }
 }
 
-void drainBattery(){
-  // Basic battery drain function based on made up values and robot speed
+void drainBattery(){ // Battery drain function based on speed of robot
   if((millis() - lastDrain > 1000) && batteryLevel > 0){
-    // Basic battery drain based only on maxSpeed set by lightState.
-    //batteryLevel -= (maxSpeed/40); 
+      // Basic battery drain based only on maxSpeed set by lightState.
+    // batteryLevel -= (maxSpeed/40); 
 
-    // Battery drain based robots encoders measuring counts
+      // Battery drain based robots encoders measuring counts
     int16_t countLeft = encoders.getCountsAndResetLeft();
     int16_t countRight = encoders.getCountsAndResetRight();
         
     // Serial.println(rotLeft);
     // Serial.println(rotRight);
 
-    /*  According to the documentation does the encoders provide 12 counts per revolution of the motor shaft
+    /*  According to the documentation, the encoders provide 12 counts per revolution of the motor shaft
         and the motors have a 75:1 ratio (more precisely 75.81:1)
         in other words the encoders have a 909.7 counts per revolution for the motors (75.81 * 12) */
     
     double revLeft = (countLeft/909.7); // As this function runs every second
-    double revRight = (countRight/909.7); // This value should be RPS (rotations per second)
+    double revRight = (countRight/909.7); // this value will be in RPS (rotations per second)
     // Serial.println(revLeft);
     // Serial.println(revRight);
     
     double revTotal = revLeft + revRight; // Calculate rotations of both motors
     // Serial.println(revTotal); 
-    batteryLevel -= revTotal; // Calculates drain based on total rotations
+    batteryLevel -= revTotal+charge_cycles/5;  // Calculates drain based on total rotations, drains faster based on amount of charges completed
 
     // V (velocity) = (pi/2)*(D*RPS)
     // D (diameter) = 0.039m
@@ -469,7 +473,7 @@ void drainBattery(){
 
     lastDrain = millis();
 
-    if(batteryLevel < chargeLimit){ // Only ask for charge automatically when charge is lower than chargeLimit
+    if((batteryLevel < chargeLimit) && (batteryLevel >= criticalLimit)){ // Only ask for charge automatically when charge is lower than chargeLimit
       Serial.println("Needs charge");
       batState = BAD;
     }
@@ -477,8 +481,8 @@ void drainBattery(){
     if(batteryLevel < criticalLimit){ // Make robot drive slower when battery is critically low
       Serial.println("Battery critical");
       batState = CRITICAL;
-      lightState = YELLOW;
-      yellowStartTime = millis();
+      lightState = YELLOW;        // Uses lightStates speed in order to reuse code
+      yellowStartTime = millis(); // Must reset yellowStartTime every run because of that. 
     }
     
     int batteryLevelPercent = map(batteryLevel, 0, 255, 0, 100); // Convert batteryvalue to percent
