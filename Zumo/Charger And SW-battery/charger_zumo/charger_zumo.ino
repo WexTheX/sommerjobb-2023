@@ -443,8 +443,8 @@ void drainBattery(){ // Battery drain function based on speed of robot
     // batteryLevel -= (maxSpeed/40); 
 
       // Battery drain based robots encoders measuring counts
-    int16_t countLeft = encoders.getCountsAndResetLeft();
-    int16_t countRight = encoders.getCountsAndResetRight();
+    int16_t countLeft = encoders.getCountsAndResetLeft();   // Get all counts over interval
+    int16_t countRight = encoders.getCountsAndResetRight(); // which here is 1000 ms (1 second)
         
     // Serial.println(rotLeft);
     // Serial.println(rotRight);
@@ -453,22 +453,22 @@ void drainBattery(){ // Battery drain function based on speed of robot
         and the motors have a 75:1 ratio (more precisely 75.81:1)
         in other words the encoders have a 909.7 counts per revolution for the motors (75.81 * 12) */
     
-    double revLeft = (countLeft/909.7); // As this function runs every second
-    double revRight = (countRight/909.7); // this value will be in RPS (rotations per second)
+    double revLeft = (countLeft/909.7);           // Calculate rotations per second (RPS)
+    double revRight = (countRight/909.7);
     // Serial.println(revLeft);
     // Serial.println(revRight);
     
-    double revTotal = revLeft + revRight; // Calculate rotations of both motors
+    double revTotal = revLeft + revRight;         // Calculate rotations of both motors
     // Serial.println(revTotal); 
-    batteryLevel -= revTotal+charge_cycles/5;  // Calculates drain based on total rotations, drains faster based on amount of charges completed
-
+    batteryLevel -= revTotal+charge_cycles/5;     // Calculates drain based on total rotations, 
+                                                  // drains faster based on amount of charges completed
     // V (velocity) = (pi/2)*(D*RPS)
     // D (diameter) = 0.039m
-    double speedLeft = (3.14/2)*0.039*revLeft; // Calculate speed left wheels
-    double speedRight = (3.14/2)*0.039*revRight; // Calculate speed of right wheels
+    double speedLeft = (3.14/2)*0.039*revLeft;    // Calculate speed left wheels
+    double speedRight = (3.14/2)*0.039*revRight;  // Calculate speed of right wheels
     // Serial.println(speedLeft);
     // Serial.println(speedRight);
-    speedTotal = (speedLeft+speedRight)/2; // Calculate total speed of robot
+    speedTotal = (speedLeft+speedRight)/2;        // Calculate total speed of robot
     // Serial.println(speedTotal);
 
     lastDrain = millis();
