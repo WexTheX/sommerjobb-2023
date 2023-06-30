@@ -26,12 +26,8 @@ void setup() {
 }
 
 void loop() {
-  if(millis() - prevMil > 10){ // Only run after a set interval (mostly to read debug prints easier)
-    updateSunPosition();
-    updateServoPosition();
-
-    prevMil = millis();
-  }
+  updateSunPosition();
+  updateServoPosition();
 }
 
 void updateSunPosition(){ // Function for updating the position of the strongest light
@@ -40,9 +36,9 @@ void updateSunPosition(){ // Function for updating the position of the strongest
   RPR = analogRead(RPR_PIN);
 
     // Print photoresistor values for debugging
-  Serial.print("L: "); Serial.print(LPR);
-  Serial.print(" M: "); Serial.print(MPR);
-  Serial.print(" R: "); Serial.println(RPR);
+  //Serial.print("L: "); Serial.print(LPR);
+  //Serial.print(" M: "); Serial.print(MPR);
+  //Serial.print(" R: "); Serial.println(RPR);
 
   if((MPR+100 >= LPR) && (MPR+100 >= RPR)){ // If the light is strongest in the middle (+ a buffer to avoid constant shifting back and fourth)
     lightState = MIDDLE;
@@ -63,13 +59,13 @@ void updateServoPosition(){  // Function for moving the servo to correct positio
       servoPos -= 1; // Move towards 50, aka to the servos left
       break;
     case RIGHT:
-      servoPos += 1; // Move towards 50, aka to the servos left
+      servoPos += 1; // Move towards 250, aka to the servos left
       break;
   }
 
   servoPos = constrain(servoPos, 50, 250);  // Constrain servoPos to within the servos range
   if(lightState != MIDDLE){
-    analogWrite(SERVO_PIN, servoPos);  // Write the servoPos PWM signal to the servo
+    analogWrite(SERVO_PIN, servoPos);       // Write the servoPos PWM signal to the servo
   }
   //Serial.print("servoPos: "); Serial.println(servoPos);
 }

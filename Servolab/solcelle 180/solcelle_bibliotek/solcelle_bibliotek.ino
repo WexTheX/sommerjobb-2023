@@ -47,9 +47,9 @@ void updateSunPosition(){ // Function for updating the position of the strongest
   if((MPR+100 >= LPR) && (MPR+100 >= RPR)){ // If the light is strongest in the middle (+ a buffer to avoid constant shifting back and fourth)
     lightState = MIDDLE;
   } else {
-    if(LPR > RPR){                  // If the light is strongest on the left side
+    if(LPR > RPR){         // If the light is strongest on the left side
       lightState = LEFT;
-    } else if (RPR > LPR){          // If the light is strongest on the right side
+    } else if (RPR > LPR){ // If the light is strongest on the right side
       lightState = RIGHT;
     }
   }
@@ -67,7 +67,7 @@ void updateServoPosition(){  // Function for moving the servo to correct positio
       break;
   }
 
-  servoPos = constrain(servoPos, 0, 180);  // Constrain servoPos to within the servos range
-  myservo.write(servoPos);         // Tell the servo to move to position servoPos
+  servoPos = constrain(servoPos, 0, 180);   // Constrain servoPos to within the servos range
+  myservo.write(servoPos);                  // Tell the servo to move to position servoPos
   //Serial.print("servoPos: "); Serial.println(servoPos);
 }
