@@ -35,7 +35,7 @@ void updateJoystick(){
   //Serial.print(" Y: "); Serial.println(yValue);
   
   yValue = map(yValue, 0, 1023, 0, 180); // Map the y values so they fix within 180°
-  //Serial.println(yValue);
+  Serial.println(yValue);
 }
 
 void updateServo(){
