@@ -12,6 +12,6 @@ Forskjellen på PWM versjonen og biblitek versjonen er minimal, hovedsakelig at 
 
 # Deler:
 ## Servo:
-Vi benytter oss av servo (SM-S2309S)[http://descargas.cetronic.es/microservo.pdf]
+Vi benytter oss av servo SM-S2309S [http://descargas.cetronic.es/microservo.pdf]
 
 ## 3D-printet del:
