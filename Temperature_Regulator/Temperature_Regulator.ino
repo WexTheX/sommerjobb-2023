@@ -10,10 +10,10 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define TEMP_PIN A1
-#define MOTOR_CCW_PIN 4
-#define MOTOR_CW_PIN 5
-#define MOTOR_ENABLE_PIN 6
+const int TEMP_PIN = A1;
+const int MOTOR_CCW_PIN = 4;
+const int MOTOR_CW_PIN = 5;
+const int MOTOR_ENABLE_PIN = 6;
 
 #define TIME_INTERVAL 500 // 500 ms interval between updates
 #define DELAY_INTERVAL 5000 // 5 seconds interval for delay, change to increase time before motor turn off
