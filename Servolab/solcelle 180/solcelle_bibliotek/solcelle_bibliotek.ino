@@ -9,8 +9,6 @@ const int RPR_PIN     = A2;
 const int SERVO_PIN   = 9;  // Define PWM-compatible digital pin for servo (On Arduino UNO: 3, 5, 6, 9, 10, 11)
 
 // Variables
-unsigned long prevMil = 0;
-
 int LPR = 0; // Variables for photoresistiors (left, middle, right)
 int MPR = 0;
 int RPR = 0;
@@ -32,12 +30,8 @@ void setup() {
 }
 
 void loop() {
-  if(millis() - prevMil > 10){ // Only run after a set interval (mostly to read debug prints easier)
-    updateSunPosition();
-    updateServoPosition();
-
-    prevMil = millis();
-  }
+  updateSunPosition();
+  updateServoPosition();
 }
 
 void updateSunPosition(){ // Function for updating the position of the strongest light
