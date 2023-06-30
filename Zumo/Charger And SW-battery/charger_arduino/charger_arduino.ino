@@ -17,7 +17,7 @@
 
 #define SEND_INTERVAL 100 // Interval of messages sent from charger.
 
-#define BUTTON_PIN_1 4
+const int BUTTON_PIN_1 = 4
 
 bool awaitingAnswer = false;
 unsigned long lastTransmission = 0;

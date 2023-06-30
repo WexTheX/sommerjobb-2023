@@ -5,9 +5,9 @@
 #include <Adafruit_SSD1306.h>
 
 // JOYSTICK PINS
-#define X_PIN A0
-#define Y_PIN A1
-#define PRESS_PIN 8
+const int X_PIN = A0;
+const int Y_PIN = A1;
+const int PRESS_PIN = 8;
 
 // OLED DEFINITIONS
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
