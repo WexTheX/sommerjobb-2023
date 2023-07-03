@@ -79,7 +79,7 @@ batteryState batState = OK;
 unsigned long lastDrain = 0;
 bool charging = false;
 
-int batteryMax = 255;                   // Max value of battery                         (Default: 255)
+int batteryMax = 1200;                  // Max value of battery                        (Default: 1200 mAh)
 int batteryLevel = batteryMax;          // Start value of battery when robot turns on   (Default: 100& of max)
 int chargeLimit = batteryMax * 0.40;    // Value for when autochange should initiate    (Default: 40% of max)
 int criticalLimit = batteryMax * 0.10;  // Value for when critical mode should initiate (Default: 10% of max)
@@ -440,7 +440,7 @@ void updateBattery(){ // Core function for battery behaviour
 void drainBattery(){ // Battery drain function based on speed of robot
   if((millis() - lastDrain > 1000) && batteryLevel > 0){
       // Basic battery drain based only on maxSpeed set by lightState.
-    // batteryLevel -= (maxSpeed/40); 
+    // batteryLevel -= (maxSpeed*10); 
 
       // Battery drain based robots encoders measuring counts
     int16_t countLeft = encoders.getCountsAndResetLeft();   // Get all counts over interval
@@ -460,7 +460,7 @@ void drainBattery(){ // Battery drain function based on speed of robot
     
     double revTotal = revLeft + revRight;         // Calculate rotations of both motors
     // Serial.println(revTotal); 
-    batteryLevel -= revTotal+charge_cycles/5;     // Calculates drain based on total rotations, 
+    //batteryLevel -= revTotal+charge_cycles/5;   // Calculates drain based on total rotations, 
                                                   // drains faster based on amount of charges completed
     // V (velocity) = (pi/2)*(D*RPS)
     // D (diameter) = 0.039m
@@ -470,6 +470,10 @@ void drainBattery(){ // Battery drain function based on speed of robot
     // Serial.println(speedRight);
     speedTotal = (speedLeft+speedRight)/2;        // Calculate total speed of robot
     // Serial.println(speedTotal);
+    double speedTotalCm = speedTotal*100;                // Change speed to CM to better fit with battery drain parameter
+
+    int drain = map(speedTotalCm, 0, 30, 10, 70); // Use map function to find appropriate drain speed based on graph
+    batteryLevel -= drain;                        // Drain battery
 
     lastDrain = millis();
 
@@ -485,10 +489,10 @@ void drainBattery(){ // Battery drain function based on speed of robot
       yellowStartTime = millis(); // Must reset yellowStartTime every run because of that. 
     }
     
-    int batteryLevelPercent = map(batteryLevel, 0, 255, 0, 100); // Convert batteryvalue to percent
+    int batteryLevelPercent = map(batteryLevel, 0, 1200, 0, 100); // Convert batteryvalue to percent
     display.clear();
     display.print(String(batteryLevelPercent)); display.print("% ");
-    display.print(String(speedTotal)); display.print("m/s");
+    display.print(String(speedTotalCm)); display.print("cm/s");
         
     // Serial.println(batteryLevel);
     // Serial.println(batState);
