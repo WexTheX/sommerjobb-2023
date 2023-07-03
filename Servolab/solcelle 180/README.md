@@ -10,6 +10,7 @@ Vi benytter en 3D printet del for å lage skillevegger mellom fotoresistorene.
 Forskjellen på PWM versjonen og biblitek versjonen er minimal, hovedsakelig at biblitek-versjonen tillater bruk av grader
 
 # Oppkobling:
+![oppkobling](./solcelle_180.png)
 
 # Deler:
 ## Servo:
