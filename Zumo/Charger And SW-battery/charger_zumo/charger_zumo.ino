@@ -489,7 +489,7 @@ void drainBattery(){ // Battery drain function based on speed of robot
       yellowStartTime = millis(); // Must reset yellowStartTime every run because of that. 
     }
     
-    int batteryLevelPercent = map(batteryLevel, 0, 1200, 0, 100); // Convert batteryvalue to percent
+    int batteryLevelPercent = map(batteryLevel, 0, 1200, 0, 100); // Use map fuction to convert batteryvalue to percent
     display.clear();
     display.print(String(batteryLevelPercent)); display.print("% ");
     display.print(String(speedTotalCm)); display.print("cm/s");
