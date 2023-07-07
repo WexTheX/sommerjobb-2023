@@ -80,7 +80,6 @@ void loop() {
       Serial.println(F("Received noise or and unknown (or not yet enabled protocol)"));
       IrReceiver.printIRResultRawFormatted(&Serial, true);
     }
-    Serial.println();
     IrReceiver.resume(); // Open IR-reciever for new commands
 
     if (awaitingAnswer && IrReceiver.decodedIRData.address != DEVICE_ID) { // If we are waiting for an answer and the answer is not from ourself
@@ -93,12 +92,12 @@ void loop() {
 
       if (IrReceiver.decodedIRData.command == COMMAND_CHARGE) { // If the command is a request to charge
         lastCarID = IrReceiver.decodedIRData.address;
-        amountCharged += 1;
-        // Serial.println(amountCharged);
+        amountCharged += 10;
+        Serial.println(amountCharged);
       }
 
       if (IrReceiver.decodedIRData.command == COMMAND_CHARGE_COMPETE){ // If the command say that the charge is completed
-        Serial.println(" Charge Complete");
+        Serial.println("Charge Complete");
         
         chargeList[getIDIndex(lastCarID)] += amountCharged; // Save charged amount to account array
         Serial.print("This charge: "); Serial.print(amountCharged); 
@@ -106,8 +105,6 @@ void loop() {
         
         amountCharged = 0; // Clear variables for next charge
         manualCharge = false;
-
-        IrSender.sendNEC(DEVICE_ID, COMMAND_CHARGE_CONFIRM, 0);        
       }
 
       awaitingAnswer = false;

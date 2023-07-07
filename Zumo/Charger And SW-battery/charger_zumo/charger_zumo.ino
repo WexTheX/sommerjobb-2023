@@ -203,9 +203,6 @@ void readIR() {
     digitalWrite(YELLOW_LED, HIGH);
     senderID = IrReceiver.decodedIRData.address;
     newCommand = true;
-  } else if (IrReceiver.decodedIRData.command == COMMAND_CHARGE_CONFIRM){
-      lightState = GREEN;
-      charging = false;
   }
 }
 
@@ -422,13 +419,15 @@ void updateBattery(){ // Core function for battery behaviour
       if(batteryLevel < batteryMax*0.80){ // As long as battery is lower than 20 of max value
         sendCommand(DEVICE_ID, COMMAND_CHARGE, IR_DIRECTION); // Send order command to charge station
         delay(100);
-        batteryLevel++;
-        int batteryLevelPercent = map(batteryLevel, 0, 255, 0, 100);
+        batteryLevel += 10;
+        int batteryLevelPercent = map(batteryLevel, 0, 1200, 0, 100); // Use map fuction to convert batteryvalue to percent
         display.clear();
         display.print(String(batteryLevelPercent)); display.print("% ");
-        display.print(String(speedTotal)); display.print("m/s");
+        display.print(String(speedTotal/100)); display.print("m/s");
       } else {
         batState = OK;
+        charging = false;
+        lightState = GREEN;
         charge_cycles += 1; // Increase charge cycles after charge
         sendCommand(DEVICE_ID, COMMAND_CHARGE_COMPETE, IR_DIRECTION); // Tells charge station that the robot is fully charged
         IrReceiver.start(); // Enable receiving of the next value
@@ -472,7 +471,7 @@ void drainBattery(){ // Battery drain function based on speed of robot
     // Serial.println(speedTotal);
     double speedTotalCm = speedTotal*100;                // Change speed to CM to better fit with battery drain parameter
 
-    int drain = map(speedTotalCm, 0, 30, 10, 70); // Use map function to find appropriate drain speed based on graph
+    int drain = map(speedTotalCm, 0, 30, 10, 50); // Use map function to find appropriate drain speed based on graph
     batteryLevel -= drain;                        // Drain battery
 
     lastDrain = millis();
