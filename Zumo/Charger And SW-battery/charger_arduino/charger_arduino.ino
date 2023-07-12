@@ -17,12 +17,8 @@
 
 #define SEND_INTERVAL 100 // Interval of messages sent from charger.
 
-const int BUTTON_PIN_1 = 4;
-
 bool awaitingAnswer = false;
 unsigned long lastTransmission = 0;
-
-bool manualCharge = false;
 
 int amountCharged = 0;
 int IDList[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 53 }; // List of ID of all robots in the system used as reference for accounts
@@ -40,16 +36,8 @@ uint8_t getIDIndex(uint8_t ID) { // Get index of in array of IDs of correct robo
   return 255;  // ID not found return 255
 }
 
-void updateButton(){
-  if(digitalRead(BUTTON_PIN_1) == HIGH){
-    manualCharge = true;
-  }
-  //Serial.println(manualCharge);
-}
-
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(BUTTON_PIN_1, INPUT);
 
   Serial.begin(9600);
   delay(3000);
@@ -60,26 +48,19 @@ void setup() {
 
 void loop() {
   unsigned long timeNow = millis();
-  updateButton();
 
   if(timeNow - millis() > SEND_INTERVAL){ // Sends IR-signal for robot to know it's at the charge station every SEND_INTERVAL ms
-    if(manualCharge){ // If button is pressed, send manual order command
-      IrSender.sendNEC(DEVICE_ID, COMMAND_MANUAL_CHARGE, 0);
-      lastTransmission = timeNow;
-      awaitingAnswer = true;
-    } else { // If button is not pressed, send auto order command
-      IrSender.sendNEC(DEVICE_ID, COMMAND_CHARGE_STATION, 0);
-      lastTransmission = timeNow;
-      awaitingAnswer = true;
-    }
+    IrSender.sendNEC(DEVICE_ID, COMMAND_CHARGE_STATION, 0);
+    lastTransmission = timeNow;
+    awaitingAnswer = true;
   }
  
   if(IrReceiver.decode()){ // If signal is received
 
     if(IrReceiver.decodedIRData.protocol == UNKNOWN){
-      Serial.println(F("Received noise or and unknown (or not yet enabled protocol)"));
-      IrReceiver.printIRResultRawFormatted(&Serial, true);
-    }
+      //Serial.println(F("Received noise or and unknown (or not yet enabled protocol)"));
+      //IrReceiver.printIRResultRawFormatted(&Serial, true);
+     }
     IrReceiver.resume(); // Open IR-reciever for new commands
 
     if (awaitingAnswer && IrReceiver.decodedIRData.address != DEVICE_ID) { // If we are waiting for an answer and the answer is not from ourself
@@ -104,7 +85,6 @@ void loop() {
         Serial.print(". Total charge: "); Serial.println(chargeList[getIDIndex(lastCarID)]);
         
         amountCharged = 0; // Clear variables for next charge
-        manualCharge = false;
       }
 
       awaitingAnswer = false;

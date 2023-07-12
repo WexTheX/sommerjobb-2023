@@ -84,7 +84,9 @@ int batteryLevel = batteryMax;          // Start value of battery when robot tur
 int chargeLimit = batteryMax * 0.40;    // Value for when autochange should initiate    (Default: 40% of max)
 int criticalLimit = batteryMax * 0.10;  // Value for when critical mode should initiate (Default: 10% of max)
 
-int charge_cycles = 0;
+int charge_cycles = 0;                  // Times charged
+int maxHealth = 255;                    // Max health of battery
+int batteryHealth = maxHealth;          // Current health of battery
 
 // Function declarations
 void updateBattery();
@@ -356,8 +358,8 @@ void setup() {
 
 void loop() {
   readIR();
-  updateSpeed();
   updateBattery();
+  updateSpeed();
 
   if (millis() - recivedCommandTime > ANSWER_DELAY && newCommand == true) {
     handleCommand(senderID, CommandToAnswer);
@@ -418,14 +420,17 @@ void updateBattery(){ // Core function for battery behaviour
     case true: // When battery is charging
       if(batteryLevel < batteryMax*0.80){ // As long as battery is lower than 20 of max value
         sendCommand(DEVICE_ID, COMMAND_CHARGE, IR_DIRECTION); // Send order command to charge station
-        delay(100);
         batteryLevel += 10;
+        delay(100);
         int batteryLevelPercent = map(batteryLevel, 0, 1200, 0, 100); // Use map fuction to convert batteryvalue to percent
         display.clear();
         display.print(String(batteryLevelPercent)); display.print("% ");
         display.print(String(speedTotal/100)); display.print("m/s");
       } else {
         batState = OK;
+        batteryHealth -= constrain((batteryLevel - batteryMax*0.8), 0, batteryMax); // Damage battery for being charged over 80%
+        batteryHealth = constrain(batteryHealth, 0, 255);
+
         charging = false;
         lightState = GREEN;
         charge_cycles += 1; // Increase charge cycles after charge
@@ -471,8 +476,9 @@ void drainBattery(){ // Battery drain function based on speed of robot
     // Serial.println(speedTotal);
     double speedTotalCm = speedTotal*100;                // Change speed to CM to better fit with battery drain parameter
 
-    int drain = map(speedTotalCm, 0, 30, 10, 50); // Use map function to find appropriate drain speed based on graph
-    batteryLevel -= drain;                        // Drain battery
+    int drain = map(speedTotalCm, 0, 30, 10, 70); // Use map function to find appropriate drain speed based on graph
+    batteryLevel -= (drain + (charge_cycles + maxHealth-batteryHealth)/10); // Drain battery
+    // Based on speed, times charged and battery health
 
     lastDrain = millis();
 
@@ -483,16 +489,20 @@ void drainBattery(){ // Battery drain function based on speed of robot
 
     if(batteryLevel < criticalLimit){ // Make robot drive slower when battery is critically low
       Serial.println("Battery critical");
+      batteryHealth -= 1; // Damage battery for draining at less than 10% charge
+      batteryHealth = constrain(batteryHealth, 0, 255);
       batState = CRITICAL;
       lightState = YELLOW;        // Uses lightStates speed in order to reuse code
       yellowStartTime = millis(); // Must reset yellowStartTime every run because of that. 
     }
     
     int batteryLevelPercent = map(batteryLevel, 0, 1200, 0, 100); // Use map fuction to convert batteryvalue to percent
+    
     display.clear();
     display.print(String(batteryLevelPercent)); display.print("% ");
     display.print(String(speedTotalCm)); display.print("cm/s");
         
+    // Serial.println(batteryHealth);
     // Serial.println(batteryLevel);
     // Serial.println(batState);
   }
