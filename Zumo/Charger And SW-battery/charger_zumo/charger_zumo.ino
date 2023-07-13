@@ -431,7 +431,6 @@ void setupBattery(){ // Setup initial battery values
 void updateBattery(){ // Core function for battery behaviour
   switch(charging){
     case false: // When battery is draining
-      Serial.println(b1.level);
       drainBattery(); 
       break;
     case true: // When battery is charging
