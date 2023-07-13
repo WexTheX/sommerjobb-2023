@@ -13,11 +13,6 @@ I charger_arduino filen ligger koden for ladestasjonen. Konseptet er at den kons
   Ladestasjonen har også en knapp som man kan bruke til å manuelt overstyre den automatiske ladefunksjonen på roboten og initere en ladning neste gang roboten passerer.
 
 
-## TODO:
-- Kompatibiliet med bank-modul for å regne ut pris og trekke dette fra konto.
-- Solcellepanel og automatisk styring av disse.
-- TCP style bekreftelse (På hver lading?)
-
 # Zumo
 I charger_zumo filen ligger kode for SW-batteriet og opplading av dette. 
   SW-batteriet har to moduser "draining" og "charging". 
@@ -29,7 +24,3 @@ I charger_zumo filen ligger kode for SW-batteriet og opplading av dette.
   Under charging vil den stoppe når den får vite at den er ved en ladestasjon og initiere ladning.
   Når den lader vil den sende en beskjed for hver enhet den lader.
   Når den er ferdig med å lade vil den sende et signal om at den er ferdig. Ladestasjonen vil sende en bekreftelse som tillater roboten å kjøre videre.
-
-## TODO:
-- Konto
-- TCP style bekreftelse (På hver lading?)
