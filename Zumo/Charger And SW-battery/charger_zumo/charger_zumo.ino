@@ -18,9 +18,9 @@ Zumo32U4IRPulses::Direction IR_DIRECTION = Zumo32U4IRPulses::Left; // Direction 
 #define DEVICE_ID 2  // ID of the device, used to identify the robot
 
 // IR-Sensor commands the robot either sends or recieves.
-#define RED_LIGHT_COMMAND 52          // Commands for traffic light states
-#define YELLOW_LIGHT_COMMAND 53
-#define GREEN_LIGHT_COMMAND 54
+#define RED_LIGHT_COMMAND 22          // Commands for traffic light states
+#define YELLOW_LIGHT_COMMAND 25
+#define GREEN_LIGHT_COMMAND 13
 
 #define COMMAND_IDENTIFY 0xF0         // Command for telling the robot to identify itself
 #define COMMAND_TOL_STATION 0xF1      // Command for telling the robot it's at a tol station
@@ -515,8 +515,7 @@ void drainBattery(){ // Battery drain function based on speed of robot
     display.print(String(batteryLevelPercent)); display.print("% ");
     display.print(String(speedTotalCm)); display.print("cm/s");
         
-    Serial.println(b1.level);
+    // Serial.println(b1.level);
     // Serial.println(batState);
   }
 }
-
