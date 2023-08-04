@@ -110,7 +110,7 @@ void printToLED(uint32_t number, int plank){ // Print given number to set plank
   n = reverseString(n);           // Reverse numbers binary form (This is because LSB must be set as index 0)
   int start = 32 * (plank - 1);   // Designate starting position
   
-  for(int x = 0; x <= n.length(); x++){ // Check every digit in the number
+  for(int x = 0; x <= n.length()-1; x++){ // Check every digit in the number
     //Serial.print(n[x]);
     if(n[x] == '1'){ // If digit is 1 make it white
       strip.setPixelColor((x + start), strip.Color(127, 127, 127));
