@@ -1,17 +1,17 @@
 
 #include <Adafruit_NeoPixel.h>
 
-const int LED_PIN = 6;
-const int LED_COUNT = 96;
+const int LED_PIN = 6;    // Set pin for connected to first Digital IN
+const int LED_COUNT = 96; // Set amount of LEDS connected, for us it's 96 (3 strips)
 
-Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800); // LED strip object
 
 String message;
-enum Calculation { ERROR, ADDITION, SUBTRACTION }; 
+enum Calculation { ERROR, ADDITION, SUBTRACTION }; // Enum to define calculation type
 Calculation calc = ERROR;
 
+// Declare all functions
 void updateInput();
-void updateSerialInput();
 void addition();
 void subtraction();
 void printToLED(int number, int plank);
@@ -26,38 +26,34 @@ void setup() {
 }
 
 void loop() {
-  updateInput();
+  updateInput(); // Update Inputs, needed when we got more than one input type
 }
 
 void updateInput(){
-  updateSerialInput();
-}
-
-void updateSerialInput(){
-  if (Serial.available() > 0) {
+  if (Serial.available() > 0) { // If we got an input from serial
     // read the incoming message:
-    message = Serial.readString();
-    message.replace(" ", "");
-    Serial.println(message);
+    message = Serial.readString();  // Read message
+    message.replace(" ", "");       // Remove spaces from message
+    //Serial.println(message); 
 
-    String temp;
-    uint32_t number1;
-    uint32_t number2;
+    String temp;        // String to temporary store numbers
+    uint32_t number1;   // Number 1, forced to accept 32 bit integers
+    uint32_t number2;   // Number 2, forced to accept 32 bit integers
 
-    bool first = true;
+    bool first = true;  // Flag to seperate numbers
 
-    for(int x = 0; x < message.length(); x++){
-      if(isDigit(message[x])){
-        temp += message[x];
+    for(int x = 0; x < message.length(); x++){ // Analyze message
+      if(isDigit(message[x])){  // If message is a digit
+        temp += message[x];     // Add digit to total number
         //Serial.println(temp);
       }
-      if(!isDigit(message[x])){
-        if(first){
-          number1 = temp.toInt();
-          temp = "";
-          first = false;
-        } else {
-          number2 = temp.toInt();
+      if(!isDigit(message[x])){   // If message is not a digit
+        if(first){                // If we are still on the first number
+          number1 = temp.toInt(); // Save first number
+          temp = "";              // Clear placeholder
+          first = false;          // Flag that we got the first number
+        } else {                  // If we're not on the first number
+          number2 = temp.toInt(); // Save second number
         }
       }
     }
@@ -65,21 +61,21 @@ void updateSerialInput(){
     //Serial.println(number1);
     //Serial.println(number2);
 
-    if(message.indexOf('+') != -1){
+    if(message.indexOf('+') != -1){         // Check if requested operation is addition
       calc = ADDITION;
-    } else if(message.indexOf('-') != -1){
+    } else if(message.indexOf('-') != -1){  // If it is not, check if it is subtraction
       calc = SUBTRACTION;
-    } else {
+    } else {                                // If it is not, then it is illegal
       calc = ERROR;
     }
     //Serial.println(calc);
     
-    if(calc == ADDITION){
+    if(calc == ADDITION){                  // Initiate addition if requested
       addition(number1, number2);
-    } else if(calc == SUBTRACTION){
+    } else if(calc == SUBTRACTION){        // Initiate subtraction if requested
       subtraction(number1, number2);
     } else {
-      Serial.println("ERROR: Input not accepted");
+      Serial.println("ERROR: Input not accepted"); // Otherwise cancel operation
     }
   }
 }
@@ -87,50 +83,50 @@ void updateSerialInput(){
 void addition(uint32_t x, uint32_t y){
   strip.clear();
 
-  uint32_t z = x + y;
-  printToLED(x, 1);
-  printToLED(y, 2);
-  printToLED(z, 3);
+  uint32_t z = x + y; // Perform the calculation
+  printToLED(x, 1); // Print to first plank
+  printToLED(y, 2); // Print to second plank
+  printToLED(z, 3); // Print to third plank
   strip.show(); 
 
-  Serial.print(x); Serial.print(" + "); Serial.print(y); Serial.print(" = "); Serial.println(z);
+  //Serial.print(x); Serial.print(" + "); Serial.print(y); Serial.print(" = "); Serial.println(z);
 }
 
-void subtraction(uint32_t x, uint32_t y){
+void subtraction(uint32_t x, uint32_t y){ 
   strip.clear();
 
-  uint32_t z = x - y;
-  printToLED(x, 1);
-  printToLED(y, 2);
-  printToLED(z, 3);
+  uint32_t z = x - y; // Perform the calculation
+  printToLED(x, 1);   // Print to first plank
+  printToLED(y, 2);   // Print to second plank
+  printToLED(z, 3);   // Print to third plank
   strip.show(); 
 
-  Serial.print(x); Serial.print(" - "); Serial.print(y); Serial.print(" = "); Serial.println(z);
+  //Serial.print(x); Serial.print(" - "); Serial.print(y); Serial.print(" = "); Serial.println(z);
 }
 
-void printToLED(uint32_t number, int plank){
-  Serial.print("Number: "); Serial.println(number);
-  String n = String(number, BIN);
-  n = reverseString(n);
-  int start = 32 * (plank - 1);
+void printToLED(uint32_t number, int plank){ // Print given number to set plank
+  //Serial.print("Number: "); Serial.println(number);
+  String n = String(number, BIN); // Convert number to binary form
+  n = reverseString(n);           // Reverse numbers binary form (This is because LSB must be set as index 0)
+  int start = 32 * (plank - 1);   // Designate starting position
   
-  for(int x = 0; x <= n.length(); x++){
-    Serial.print(n[x]);
-    if(n[x] == '1'){
+  for(int x = 0; x <= n.length(); x++){ // Check every digit in the number
+    //Serial.print(n[x]);
+    if(n[x] == '1'){ // If digit is 1 make it white
       strip.setPixelColor((x + start), strip.Color(127, 127, 127));
-    } else if(n[x] == '0'){
+    } else if(n[x] == '0'){ // If digit is 0 make it red
       strip.setPixelColor((x + start), strip.Color(127, 0, 0));
     }
   }
-  Serial.println("");
-}
+  //Serial.println("");
+} 
 
-String reverseString(String text){
-  Serial.print("Before: ");Serial.println(text);
-  String textRev;
-  for(int x = 0; x < text.length(); x++){
-    textRev += text[text.length()-1-x];
+String reverseString(String text){ // Reverse string
+  //Serial.print("Before: ");Serial.println(text);
+  String textRev; // Placeholder string
+  for(int x = 0; x < text.length(); x++){ // For entire message
+    textRev += text[text.length()-1-x];   // Set first char in placeholder to be last char in original
   };
-  Serial.print("After:  "); Serial.println(textRev);
-  return textRev;
+  //Serial.print("After:  "); Serial.println(textRev);
+  return textRev; // Return the reversed string
 }
